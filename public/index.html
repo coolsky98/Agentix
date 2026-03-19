@@ -343,7 +343,7 @@
     const root = { dirs: {}, files: [] };
     for (const file of files) {
       const parts = file.path.split('/');
-      parts.pop(); // remove filename, we keep it in file.name
+      parts.pop(); // remove filename segment; display name comes from file.name or path
       let node = root;
       for (const part of parts) {
         if (!node.dirs[part]) node.dirs[part] = { dirs: {}, files: [] };
@@ -445,6 +445,7 @@
   }
 
   function renderFileRow(file, container, ancestors, isLast) {
+    const displayName = file.name || file.path.split('/').pop() || file.path;
     const row = document.createElement('div');
     row.className = 'file-row' + (expandedFiles.has(file.id) ? ' expanded' : '');
     row.dataset.fileId = file.id;
@@ -454,7 +455,7 @@
       `<div class="indent-cell${isLast ? ' last' : ''}"></div>` +
       `<div class="row-toggle" style="visibility:hidden">▶</div>` +
       `<span class="row-icon"><div class="status-dot ${file.lock ? 'locked' : 'unlocked'}"></div></span>` +
-      `<span class="row-label file-label">${escHtml(file.name)}</span>` +
+      `<span class="row-label file-label">${escHtml(displayName)}</span>` +
       `<div class="row-meta">${fileBadgeHtml(file)}</div>` +
       `<div class="file-chevron">▶</div>`;
 
