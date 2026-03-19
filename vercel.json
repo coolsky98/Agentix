@@ -8,6 +8,8 @@
     { "source": "/files",        "destination": "/api" },
     { "source": "/files/(.*)",   "destination": "/api" },
     { "source": "/repo",         "destination": "/api" },
-    { "source": "/repo/(.*)",    "destination": "/api" }
+    { "source": "/repo/(.*)",    "destination": "/api" },
+    { "source": "/repos",        "destination": "/api" },
+    { "source": "/repos/(.*)",   "destination": "/api" }
   ]
 }

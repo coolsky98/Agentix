@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Storage, RepoRegistry } from '@agentix/core';
-import { Analytics } from '@vercel/analytics/next';
 import { repoContext } from './middleware/repoContext';
 import { errorHandler } from './middleware/errorHandler';
 import { repoRouter } from './routes/repo';
