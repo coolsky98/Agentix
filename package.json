@@ -6,5 +6,8 @@
   "scripts": {
     "build": "npm run build -w @agentix/core && npm run build -w @agentix/server && npm run build -w @agentix/cli",
     "clean": "rm -rf packages/*/dist"
+  },
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
   }
 }

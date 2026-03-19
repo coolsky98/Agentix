@@ -1,17 +1,16 @@
-import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { Manifest, TrackedFile, LogEntry, LogEntryType } from './types';
-import { logPath } from './paths';
+import { Manifest, TrackedFile, LogEntry } from './types';
+import { Storage } from './storage';
 import { FileNotFoundError, DuplicateFilePathError } from './errors';
 
-export function trackFile(
+export async function trackFile(
   manifest: Manifest,
-  repoRoot: string,
+  storage: Storage,
   name: string,
   filePath: string,
   agentId: string,
   initialContent?: string,
-): TrackedFile {
+): Promise<TrackedFile> {
   // Check for duplicate path
   for (const f of Object.values(manifest.files)) {
     if (f.path === filePath) {
@@ -40,34 +39,18 @@ export function trackFile(
     content: initialContent ?? '',
     type: 'create',
   };
-  appendLogEntry(repoRoot, id, entry);
+  await storage.appendLogEntry(id, entry);
 
   return tracked;
 }
 
-export function appendLogEntry(repoRoot: string, fileId: string, entry: LogEntry): void {
-  const lp = logPath(repoRoot, fileId);
-  const line = JSON.stringify(entry) + '\n';
-  fs.appendFileSync(lp, line, 'utf-8');
-}
-
-export function readLog(repoRoot: string, fileId: string): LogEntry[] {
-  const lp = logPath(repoRoot, fileId);
-  if (!fs.existsSync(lp)) return [];
-  const raw = fs.readFileSync(lp, 'utf-8');
-  return raw
-    .split('\n')
-    .filter((l) => l.trim().length > 0)
-    .map((l) => JSON.parse(l) as LogEntry);
-}
-
-export function replayContent(repoRoot: string, fileId: string): string {
-  const entries = readLog(repoRoot, fileId);
+export async function replayContent(storage: Storage, fileId: string): Promise<string> {
+  const entries = await storage.readLog(fileId);
   return entries.map((e) => e.content).join('');
 }
 
-export function getNextSeq(repoRoot: string, fileId: string): number {
-  const entries = readLog(repoRoot, fileId);
+export async function getNextSeq(storage: Storage, fileId: string): Promise<number> {
+  const entries = await storage.readLog(fileId);
   if (entries.length === 0) return 1;
   return Math.max(...entries.map((e) => e.seq)) + 1;
 }

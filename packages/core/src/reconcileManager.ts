@@ -1,21 +1,21 @@
 import { Manifest, ReconcileResult, LogEntry } from './types';
 import { FileNotFoundError, FileNotLockedError, NotLockOwnerError } from './errors';
-import { listCopiesForFile, persistCopy } from './copyManager';
-import { appendLogEntry, getNextSeq } from './fileManager';
+import { Storage } from './storage';
+import { getNextSeq } from './fileManager';
 
-export function reconcileOnUnlock(
-  repoRoot: string,
+export async function reconcileOnUnlock(
+  storage: Storage,
   manifest: Manifest,
   fileId: string,
   agentId: string,
-): ReconcileResult {
+): Promise<ReconcileResult> {
   const file = manifest.files[fileId];
   if (!file) throw new FileNotFoundError(fileId);
   if (file.lock === null) throw new FileNotLockedError(fileId);
   if (file.lock.agentId !== agentId) throw new NotLockOwnerError(fileId, agentId);
 
   // Find all pending copies sorted by createdAt asc
-  const pendingCopies = listCopiesForFile(repoRoot, fileId)
+  const pendingCopies = (await storage.listCopiesForFile(fileId))
     .filter((c) => c.status === 'pending')
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
@@ -25,7 +25,7 @@ export function reconcileOnUnlock(
   // Reconcile each copy — append entries to main log first
   for (const copy of pendingCopies) {
     for (const entry of copy.entries) {
-      const seq = getNextSeq(repoRoot, fileId);
+      const seq = await getNextSeq(storage, fileId);
       const logEntry: LogEntry = {
         seq,
         agentId: copy.agentId,
@@ -33,13 +33,13 @@ export function reconcileOnUnlock(
         content: entry.content,
         type: 'copy-reconcile',
       };
-      appendLogEntry(repoRoot, fileId, logEntry);
+      await storage.appendLogEntry(fileId, logEntry);
       appendedEntries++;
     }
 
     // Mark copy as reconciled
     copy.status = 'reconciled';
-    persistCopy(repoRoot, copy);
+    await storage.writeCopy(copy);
     reconciledCopies.push(copy.copyId);
   }
 
