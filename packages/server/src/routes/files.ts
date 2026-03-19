@@ -2,16 +2,29 @@ import { Router, Request, Response, NextFunction } from 'express';
 
 const router = Router();
 
+function requireFields(fields: Record<string, unknown>, res: Response): boolean {
+  const missing = Object.entries(fields)
+    .filter(([, v]) => v === undefined || v === null || v === '')
+    .map(([k]) => k);
+  if (missing.length > 0) {
+    res.status(400).json({ error: 'ValidationError', message: `Missing required fields: ${missing.join(', ')}` });
+    return false;
+  }
+  return true;
+}
+
 // POST /files — track a new file
 router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, path, agentId, initialContent } = req.body as {
-      name: string;
+      name?: string;
       path: string;
       agentId: string;
       initialContent?: string;
     };
-    const file = await req.repo.trackFile(name, path, agentId, initialContent);
+    if (!requireFields({ path, agentId }, res)) return;
+    const resolvedName = (name && name.trim()) || path.split('/').pop()!;
+    const file = await req.repo.trackFile(resolvedName, path, agentId, initialContent);
     res.status(201).json(file);
   } catch (err) {
     next(err);
@@ -42,6 +55,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction): Prom
 router.post('/:id/lock', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { agentId } = req.body as { agentId: string };
+    if (!requireFields({ agentId }, res)) return;
     const file = await req.repo.lockFile(req.params.id, agentId);
     res.json(file);
   } catch (err) {
@@ -55,6 +69,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const agentId = req.query.agentId as string;
+      if (!requireFields({ agentId }, res)) return;
       const result = await req.repo.unlockFile(req.params.id, agentId);
       res.json(result);
     } catch (err) {
@@ -69,6 +84,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { agentId, content } = req.body as { agentId: string; content: string };
+      if (!requireFields({ agentId, content }, res)) return;
       const result = await req.repo.appendToFile(req.params.id, agentId, content);
       res.json(result);
     } catch (err) {
