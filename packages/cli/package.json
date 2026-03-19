@@ -5,7 +5,7 @@
     "agentix": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc --build tsconfig.json"
   },
   "dependencies": {
     "@agentix/core": "*",
