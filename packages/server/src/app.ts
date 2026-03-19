@@ -275,7 +275,7 @@ const STATUS_PAGE = `<!DOCTYPE html>
 export function createApp(storage: Storage) {
   const app = express();
 
-  app.use(express.json());
+  app.use(express.json({ limit: '100kb' }));
   app.use(repoContext(storage));
 
   app.get('/', (_req: Request, res: Response) => {

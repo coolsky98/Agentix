@@ -8,6 +8,7 @@ import {
   getTrackedFile,
   findFileByPath,
 } from './fileManager';
+import { LimitExceededError } from './errors';
 import { createCopy, appendToCopy, findPendingCopy } from './copyManager';
 import { reconcileOnUnlock } from './reconcileManager';
 
@@ -29,6 +30,10 @@ export class RepoManager {
     initialContent?: string,
   ): Promise<TrackedFile> {
     const manifest = await this.storage.readManifest();
+    const MAX_FILES = 500;
+    if (Object.keys(manifest.files).length >= MAX_FILES) {
+      throw new LimitExceededError(`Repository limit of ${MAX_FILES} files reached.`);
+    }
     const file = await trackFile(manifest, this.storage, name, filePath, agentId, initialContent);
     await this.storage.writeManifest(manifest);
     return file;

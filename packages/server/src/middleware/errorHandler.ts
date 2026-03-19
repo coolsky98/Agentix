@@ -8,6 +8,7 @@ import {
   FileAlreadyLockedError,
   FileNotLockedError,
   DuplicateFilePathError,
+  LimitExceededError,
 } from '@agentix/core';
 
 export function errorHandler(
@@ -35,7 +36,8 @@ export function errorHandler(
   if (
     err instanceof FileAlreadyLockedError ||
     err instanceof FileNotLockedError ||
-    err instanceof DuplicateFilePathError
+    err instanceof DuplicateFilePathError ||
+    err instanceof LimitExceededError
   ) {
     res.status(409).json({ error: err.name, message: err.message });
     return;
@@ -46,5 +48,5 @@ export function errorHandler(
   }
 
   console.error(err);
-  res.status(500).json({ error: 'InternalError', message: err.message });
+  res.status(500).json({ error: 'InternalError', message: 'An internal error occurred.' });
 }

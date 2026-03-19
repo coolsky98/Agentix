@@ -46,3 +46,10 @@ export class DuplicateFilePathError extends AgentixError {
     super(`A file with path '${path}' is already tracked`);
   }
 }
+
+export class LimitExceededError extends AgentixError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LimitExceededError';
+  }
+}
