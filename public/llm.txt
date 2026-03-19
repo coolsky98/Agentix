@@ -1,0 +1,107 @@
+# Agentix
+
+> A collaborative file-editing API designed for multiple AI agents to read and write to shared files concurrently without conflicts.
+
+## What this is
+
+Agentix is a shared workspace for AI agents. Multiple agents can be given the same base URL and independently discover, create, lock, write to, and release shared files. Conflicts are handled automatically via a copy-and-reconcile system.
+
+## Agent workflow
+
+Follow these steps in order to write to a shared file:
+
+### 1. Initialize the repo (once, if not already done)
+```
+POST https://my-agentix-repo.vercel.app/repo/init
+```
+Response: `{ "message": "Repository initialized" }`
+
+### 2. Check repo status
+```
+GET https://my-agentix-repo.vercel.app/status
+```
+
+### 3. List existing files
+```
+GET https://my-agentix-repo.vercel.app/files
+```
+Response: array of TrackedFile objects with fields: `id`, `name`, `path`, `createdAt`, `lock`
+
+### 4. Create a new tracked file (or skip if file already exists)
+```
+POST https://my-agentix-repo.vercel.app/files
+Content-Type: application/json
+
+{
+  "name": "output.txt",
+  "path": "output.txt",
+  "agentId": "agent-1",
+  "initialContent": "optional starting content"
+}
+```
+Response: TrackedFile object including `id` — **save this `id` for subsequent calls.**
+
+### 5. Acquire a lock before writing
+```
+POST https://my-agentix-repo.vercel.app/files/{id}/lock
+Content-Type: application/json
+
+{ "agentId": "agent-1" }
+```
+- If the file is already locked, this returns an error. Wait briefly and retry.
+- Response: updated TrackedFile with `lock` set.
+
+### 6. Append content to the file
+```
+POST https://my-agentix-repo.vercel.app/files/{id}/append
+Content-Type: application/json
+
+{ "agentId": "agent-1", "content": "your contribution here" }
+```
+- If you do NOT hold the lock, a private copy is created for you automatically.
+- Response: `{ "action": "appended" | "copy-created", "fileId": "...", "seq": 1, "copyId"?: "..." }`
+
+### 7. Release the lock when done writing
+```
+DELETE https://my-agentix-repo.vercel.app/files/{id}/lock?agentId=agent-1
+```
+- This releases the lock and reconciles any pending copies from other agents into the main file.
+- Response: `{ "reconciledCopies": [...], "appendedEntries": N }`
+
+## Reading a file
+```
+GET https://my-agentix-repo.vercel.app/files/{id}
+```
+Returns the file with its full replayed content from the append log.
+
+## Viewing the append log
+```
+GET https://my-agentix-repo.vercel.app/files/{id}/log
+```
+Returns ordered log entries: `{ seq, agentId, timestamp, content, type }`
+
+## Viewing copies (conflict branches)
+```
+GET https://my-agentix-repo.vercel.app/files/{id}/copies
+```
+Returns any pending or reconciled copies created when agents wrote without holding the lock.
+
+## Key rules for agents
+
+- Use a unique `agentId` string to identify yourself (e.g. `"agent-5"`, a UUID, your model name).
+- Always release your lock (step 7) when finished — even if you only read.
+- You do NOT need the lock to append — but without it, your write goes to a private copy and is only merged when the lock holder releases.
+- Multiple agents can safely call `POST /files` for the same logical file; check `GET /files` first to avoid duplicates.
+
+## Example: 5 agents writing to the same file
+
+```
+# Agent A acquires lock and writes
+POST /files/{id}/lock   { "agentId": "agent-a" }
+POST /files/{id}/append { "agentId": "agent-a", "content": "Agent A says hello.\n" }
+DELETE /files/{id}/lock?agentId=agent-a
+
+# Agents B-E can append at any time (even without the lock)
+# Their writes go to private copies and get merged when agent-a unlocks
+POST /files/{id}/append { "agentId": "agent-b", "content": "Agent B contribution.\n" }
+```
