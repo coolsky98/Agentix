@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentix — Live Spectator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0d0f;
+      --surface:  #17171b;
+      --border:   #2a2a32;
+      --text:     #e2e2e8;
+      --muted:    #6b6b80;
+      --accent:   #7c6af7;
+      --green:    #34d399;
+      --yellow:   #fbbf24;
+      --red:      #f87171;
+      --mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+    .subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+    }
+    .pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    .pulse.error { background: var(--red); animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--surface);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.red { color: var(--red); }
+
+    /* ── Main layout ── */
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+    .section-heading {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── File list ── */
+    .file-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .file-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .file-card:hover { border-color: var(--accent); }
+    .file-card.expanded { border-color: var(--accent); }
+
+    .file-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .file-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .file-status-dot.unlocked { background: var(--green); }
+    .file-status-dot.locked   { background: var(--yellow); animation: pulse 2s infinite; }
+
+    .file-info { flex: 1; min-width: 0; }
+    .file-name {
+      font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .file-path {
+      font-size: 12px; color: var(--muted);
+      font-family: var(--mono);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .file-meta { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge.lock {
+      background: rgba(251,191,36,0.12);
+      color: var(--yellow);
+      border: 1px solid rgba(251,191,36,0.25);
+    }
+    .badge.copies {
+      background: rgba(124,106,247,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(124,106,247,0.25);
+    }
+    .badge.free {
+      background: rgba(52,211,153,0.08);
+      color: var(--green);
+      border: 1px solid rgba(52,211,153,0.2);
+    }
+
+    .chevron {
+      color: var(--muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .file-card.expanded .chevron { transform: rotate(90deg); }
+
+    /* ── File detail ── */
+    .file-detail {
+      display: none;
+      border-top: 1px solid var(--border);
+    }
+    .file-card.expanded .file-detail { display: block; }
+
+    .detail-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .tab-btn {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+
+    .content-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 320px;
+      overflow-y: auto;
+      color: #c9d1d9;
+    }
+    .content-block.empty { color: var(--muted); font-style: italic; font-family: inherit; }
+
+    /* ── Log entries ── */
+    .log-list { display: flex; flex-direction: column; gap: 6px; }
+    .log-entry {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .log-meta {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 6px;
+    }
+    .log-seq {
+      color: var(--muted);
+      font-size: 11px;
+      min-width: 32px;
+    }
+    .log-type {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .log-type.create   { background: rgba(52,211,153,0.15); color: var(--green); }
+    .log-type.append   { background: rgba(124,106,247,0.15); color: var(--accent); }
+    .log-type.copy-reconcile { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .log-agent { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-time  { color: var(--muted); font-size: 11px; margin-left: auto; flex-shrink: 0; }
+    .log-content {
+      color: #c9d1d9;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+    /* ── Error ── */
+    .error-bar {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.25);
+      color: var(--red);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+    .error-bar.visible { display: block; }
+
+    /* ── Not initialized banner ── */
+    .init-banner {
+      background: rgba(124,106,247,0.08);
+      border: 1px solid rgba(124,106,247,0.2);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    .init-banner.visible { display: block; }
+    .init-banner h3 { color: var(--accent); margin-bottom: 6px; }
+    .init-banner p { color: var(--muted); font-size: 13px; }
+    .init-btn {
+      margin-top: 12px;
+      padding: 8px 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .init-btn:hover { opacity: 0.85; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <span>Agentix</span>
+    </div>
+    <div class="subtitle">Live Spectator · agent-only append-only VCS</div>
+  </div>
+  <div class="live-badge">
+    <div class="pulse" id="pulse"></div>
+    <span id="last-update">connecting…</span>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value green" id="stat-files">—</div>
+    <div class="stat-label">Tracked Files</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value yellow" id="stat-locked">—</div>
+    <div class="stat-label">Locked Files</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:var(--accent)" id="stat-copies">—</div>
+    <div class="stat-label">Pending Copies</div>
+  </div>
+</div>
+
+<main>
+  <div class="error-bar" id="error-bar"></div>
+  <div class="init-banner" id="init-banner">
+    <h3>Repository not initialized</h3>
+    <p>No Agentix repository has been initialized yet. Click below to initialize one.</p>
+    <button class="init-btn" id="init-btn">Initialize Repository</button>
+  </div>
+  <div id="files-section">
+    <div class="section-heading">Files</div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+</main>
+
+<script>
+  const POLL_INTERVAL = 3000;
+  const expandedFiles = new Set();   // fileIds currently expanded
+  const fileDetailCache = {};        // { fileId: { content, log } }
+
+  // ── Utilities ──────────────────────────────────────────────────────────────
+
+  async function apiFetch(path) {
+    const res = await fetch(path);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw Object.assign(new Error(body.message || res.statusText), { status: res.status });
+    }
+    return res.json();
+  }
+
+  function timeAgo(iso) {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 5)   return 'just now';
+    if (diff < 60)  return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    return `${Math.floor(diff/3600)}h ago`;
+  }
+
+  function setError(msg) {
+    const bar = document.getElementById('error-bar');
+    bar.textContent = msg;
+    bar.classList.toggle('visible', !!msg);
+    document.getElementById('pulse').className = msg ? 'pulse error' : 'pulse';
+  }
+
+  // ── Polling ────────────────────────────────────────────────────────────────
+
+  async function poll() {
+    try {
+      const status = await apiFetch('/status');
+      setError('');
+      document.getElementById('stat-files').textContent  = status.files.length;
+      document.getElementById('stat-locked').textContent = status.lockedFiles;
+      document.getElementById('stat-copies').textContent = status.pendingCopies;
+      document.getElementById('last-update').textContent = 'Live · ' + new Date().toLocaleTimeString();
+      document.getElementById('init-banner').classList.remove('visible');
+
+      renderFileList(status.files);
+
+      // refresh detail for any open file
+      for (const fileId of expandedFiles) {
+        fetchFileDetail(fileId);
+      }
+    } catch (err) {
+      if (err.status === 409 && err.message && err.message.toLowerCase().includes('not initialized')) {
+        document.getElementById('init-banner').classList.add('visible');
+        document.getElementById('stat-files').textContent  = '0';
+        document.getElementById('stat-locked').textContent = '0';
+        document.getElementById('stat-copies').textContent = '0';
+        document.getElementById('file-list').innerHTML = '';
+        setError('');
+      } else {
+        setError('API error: ' + err.message);
+      }
+    }
+  }
+
+  // ── Render file list ───────────────────────────────────────────────────────
+
+  function renderFileList(files) {
+    const list = document.getElementById('file-list');
+
+    if (files.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📁</div>
+          <div class="empty-state-title">No files tracked yet</div>
+          <p>Files will appear here as agents upload them.</p>
+        </div>`;
+      return;
+    }
+
+    // Build a map of current cards by fileId for diff-free updates
+    const existing = {};
+    list.querySelectorAll('.file-card').forEach(el => {
+      existing[el.dataset.fileId] = el;
+    });
+
+    const ordered = files.slice(); // preserve server order
+    ordered.forEach((file, i) => {
+      let card = existing[file.id];
+      if (!card) {
+        card = buildFileCard(file);
+        list.appendChild(card);
+      } else {
+        updateFileCardHeader(card, file);
+        delete existing[file.id];
+      }
+      // ensure correct order
+      if (list.children[i] !== card) list.insertBefore(card, list.children[i] || null);
+    });
+
+    // Remove cards that are no longer in the list
+    Object.values(existing).forEach(el => el.remove());
+  }
+
+  function buildFileCard(file) {
+    const card = document.createElement('div');
+    card.className = 'file-card' + (expandedFiles.has(file.id) ? ' expanded' : '');
+    card.dataset.fileId = file.id;
+
+    card.innerHTML = `
+      <div class="file-header">
+        <div class="file-status-dot ${file.lock ? 'locked' : 'unlocked'}"></div>
+        <div class="file-info">
+          <div class="file-name">${escHtml(file.name)}</div>
+          <div class="file-path">${escHtml(file.path)}</div>
+        </div>
+        <div class="file-meta">
+          ${fileBadges(file)}
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="file-detail">
+        <div class="detail-tabs">
+          <button class="tab-btn active" data-tab="content">Content</button>
+          <button class="tab-btn" data-tab="log">Log</button>
+        </div>
+        <div class="tab-content active" data-tab="content">
+          <div class="content-block empty" id="content-${file.id}">Loading…</div>
+        </div>
+        <div class="tab-content" data-tab="log">
+          <div class="log-list" id="log-${file.id}"></div>
+        </div>
+      </div>`;
+
+    // Toggle expand
+    card.querySelector('.file-header').addEventListener('click', () => toggleCard(card, file.id));
+
+    // Tab switching
+    card.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const tab = btn.dataset.tab;
+        card.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        card.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === tab));
+      });
+    });
+
+    if (expandedFiles.has(file.id)) fetchFileDetail(file.id);
+    return card;
+  }
+
+  function updateFileCardHeader(card, file) {
+    const dot = card.querySelector('.file-status-dot');
+    dot.className = 'file-status-dot ' + (file.lock ? 'locked' : 'unlocked');
+    card.querySelector('.file-name').textContent = file.name;
+    card.querySelector('.file-path').textContent = file.path;
+    card.querySelector('.file-meta').innerHTML = fileBadges(file);
+  }
+
+  function fileBadges(file) {
+    if (file.lock) {
+      return `<span class="badge lock">🔒 ${escHtml(file.lock.agentId.slice(0, 8))}…</span>`;
+    }
+    return `<span class="badge free">Unlocked</span>`;
+  }
+
+  function toggleCard(card, fileId) {
+    const expanded = card.classList.toggle('expanded');
+    if (expanded) {
+      expandedFiles.add(fileId);
+      fetchFileDetail(fileId);
+    } else {
+      expandedFiles.delete(fileId);
+    }
+  }
+
+  // ── File detail (content + log) ────────────────────────────────────────────
+
+  async function fetchFileDetail(fileId) {
+    try {
+      const [fileData, log] = await Promise.all([
+        apiFetch(`/files/${fileId}`),
+        apiFetch(`/files/${fileId}/log`),
+      ]);
+      renderFileDetail(fileId, fileData.content, log);
+    } catch (e) {
+      // silently ignore if card was collapsed
+    }
+  }
+
+  function renderFileDetail(fileId, content, log) {
+    const contentEl = document.getElementById(`content-${fileId}`);
+    if (contentEl) {
+      if (content && content.trim()) {
+        contentEl.className = 'content-block';
+        contentEl.textContent = content;
+      } else {
+        contentEl.className = 'content-block empty';
+        contentEl.textContent = '(empty)';
+      }
+    }
+
+    const logEl = document.getElementById(`log-${fileId}`);
+    if (logEl) {
+      if (!log || log.length === 0) {
+        logEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0">No log entries yet.</div>';
+      } else {
+        logEl.innerHTML = log.map(entry => `
+          <div class="log-entry">
+            <div class="log-meta">
+              <span class="log-seq">#${entry.seq}</span>
+              <span class="log-type ${entry.type}">${escHtml(entry.type)}</span>
+              <span class="log-agent">${escHtml(entry.agentId)}</span>
+              <span class="log-time">${timeAgo(entry.timestamp)}</span>
+            </div>
+            <div class="log-content">${escHtml(entry.content)}</div>
+          </div>`).join('');
+      }
+    }
+  }
+
+  // ── Init repo ──────────────────────────────────────────────────────────────
+
+  document.getElementById('init-btn').addEventListener('click', async () => {
+    try {
+      await fetch('/repo/init', { method: 'POST' });
+      poll();
+    } catch (e) {
+      setError('Failed to initialize: ' + e.message);
+    }
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Start ──────────────────────────────────────────────────────────────────
+
+  poll();
+  setInterval(poll, POLL_INTERVAL);
+</script>
+</body>
+</html>

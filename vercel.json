@@ -1,5 +1,11 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/status",     "destination": "/api" },
+    { "source": "/files",      "destination": "/api" },
+    { "source": "/files/(.*)", "destination": "/api" },
+    { "source": "/repo",       "destination": "/api" },
+    { "source": "/repo/(.*)",  "destination": "/api" }
+  ]
 }
