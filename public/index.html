@@ -18,6 +18,7 @@
       --yellow:   #fbbf24;
       --red:      #f87171;
       --mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --indent:   20px;
     }
 
     body {
@@ -41,173 +42,153 @@
       z-index: 10;
     }
     .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 16px;
-      letter-spacing: -0.3px;
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 16px; letter-spacing: -0.3px;
     }
     .logo-icon {
-      width: 28px; height: 28px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
+      width: 28px; height: 28px; background: var(--accent);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px;
     }
     .subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
-    .live-badge {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--muted);
-    }
-    .pulse {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
+    .live-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
     .pulse.error { background: var(--red); animation: none; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
     /* ── Stats bar ── */
-    .stats-bar {
-      display: flex;
-      gap: 1px;
-      background: var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .stat {
-      flex: 1;
-      padding: 14px 20px;
-      background: var(--surface);
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-    }
+    .stats-bar { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+    .stat { flex: 1; padding: 14px 20px; background: var(--surface); display: flex; flex-direction: column; gap: 4px; }
+    .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
     .stat-value.green { color: var(--green); }
     .stat-value.yellow { color: var(--yellow); }
-    .stat-value.red { color: var(--red); }
 
-    /* ── Main layout ── */
+    /* ── Main ── */
     main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .section-heading { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 12px; }
 
-    .section-heading {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    /* ── File list ── */
-    .file-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .file-card {
+    /* ── Tree container ── */
+    .tree {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
-      transition: border-color 0.15s;
+      font-family: var(--mono);
+      font-size: 13px;
     }
-    .file-card:hover { border-color: var(--accent); }
-    .file-card.expanded { border-color: var(--accent); }
 
-    .file-header {
+    /* ── Directory row ── */
+    .dir-row {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
+      gap: 0;
+      height: 34px;
       cursor: pointer;
       user-select: none;
+      color: var(--text);
+      position: relative;
     }
-    .file-status-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .file-status-dot.unlocked { background: var(--green); }
-    .file-status-dot.locked   { background: var(--yellow); animation: pulse 2s infinite; }
+    .dir-row:hover { background: rgba(255,255,255,0.03); }
 
-    .file-info { flex: 1; min-width: 0; }
-    .file-name {
-      font-weight: 600;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    /* ── File row ── */
+    .file-row {
+      display: flex;
+      align-items: center;
+      height: 34px;
+      cursor: pointer;
+      user-select: none;
+      border-top: 1px solid transparent;
+      position: relative;
     }
-    .file-path {
-      font-size: 12px; color: var(--muted);
-      font-family: var(--mono);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .file-row:hover { background: rgba(255,255,255,0.03); }
+    .file-row.expanded { background: rgba(124,106,247,0.06); border-top-color: var(--border); }
 
-    .file-meta { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    /* indent guides */
+    .indent-cell {
+      width: var(--indent);
+      height: 100%;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .indent-cell::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+    /* last-child guide fades halfway */
+    .indent-cell.last::before { bottom: 50%; }
+
+    .row-toggle {
+      width: 20px; height: 34px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+      font-size: 10px;
+      transition: transform 0.15s;
+    }
+    .dir-row.open > .row-toggle { transform: rotate(90deg); }
+
+    .row-icon { margin-right: 6px; font-size: 14px; flex-shrink: 0; }
+
+    .row-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dir-label { font-weight: 600; color: var(--text); }
+    .file-label { color: #c9d1d9; }
+
+    .row-meta { display: flex; gap: 6px; align-items: center; padding-right: 14px; flex-shrink: 0; }
+
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.unlocked { background: var(--green); }
+    .status-dot.locked   { background: var(--yellow); animation: pulse 2s infinite; }
 
     .badge {
       display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 8px; border-radius: 4px;
-      font-size: 11px; font-weight: 600;
-      white-space: nowrap;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .badge.lock {
-      background: rgba(251,191,36,0.12);
-      color: var(--yellow);
-      border: 1px solid rgba(251,191,36,0.25);
-    }
-    .badge.copies {
-      background: rgba(124,106,247,0.12);
-      color: var(--accent);
-      border: 1px solid rgba(124,106,247,0.25);
-    }
-    .badge.free {
-      background: rgba(52,211,153,0.08);
-      color: var(--green);
-      border: 1px solid rgba(52,211,153,0.2);
-    }
+    .badge.lock { background: rgba(251,191,36,0.12); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+    .badge.free { background: rgba(52,211,153,0.08); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
 
-    .chevron {
-      color: var(--muted);
-      font-size: 12px;
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
-    .file-card.expanded .chevron { transform: rotate(90deg); }
+    .file-chevron { color: var(--muted); font-size: 10px; padding-right: 14px; transition: transform 0.15s; flex-shrink: 0; }
+    .file-row.expanded .file-chevron { transform: rotate(90deg); }
 
-    /* ── File detail ── */
-    .file-detail {
+    /* ── Separator between rows inside tree ── */
+    .dir-row + .dir-row,
+    .dir-row + .file-row,
+    .file-row + .dir-row,
+    .file-row + .file-row { border-top: 1px solid var(--border); }
+    .file-row.expanded + * { border-top: 1px solid var(--border); }
+
+    /* ── Dir children wrapper ── */
+    .dir-children { display: block; }
+    .dir-children.hidden { display: none; }
+
+    /* ── File detail panel ── */
+    .file-panel {
       display: none;
       border-top: 1px solid var(--border);
+      background: var(--bg);
     }
-    .file-card.expanded .file-detail { display: block; }
+    .file-panel.visible { display: block; }
 
-    .detail-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,0.2);
-    }
+    .detail-tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.25); }
     .tab-btn {
-      padding: 10px 16px;
-      font-size: 12px;
-      color: var(--muted);
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      margin-bottom: -1px;
+      padding: 9px 16px; font-size: 12px; color: var(--muted);
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; transition: color 0.15s, border-color 0.15s; margin-bottom: -1px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-btn:hover:not(.active) { color: var(--text); }
 
-    .tab-content { display: none; padding: 16px; }
+    .tab-content { display: none; padding: 14px 16px; }
     .tab-content.active { display: block; }
 
     .content-block {
-      background: var(--bg);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 14px 16px;
@@ -216,7 +197,7 @@
       line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
-      max-height: 320px;
+      max-height: 360px;
       overflow-y: auto;
       color: #c9d1d9;
     }
@@ -225,91 +206,49 @@
     /* ── Log entries ── */
     .log-list { display: flex; flex-direction: column; gap: 6px; }
     .log-entry {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-family: var(--mono);
-      font-size: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px;
+      font-family: var(--mono); font-size: 12px;
     }
-    .log-meta {
-      display: flex; gap: 10px; align-items: center;
-      margin-bottom: 6px;
-    }
-    .log-seq {
-      color: var(--muted);
-      font-size: 11px;
-      min-width: 32px;
-    }
+    .log-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+    .log-seq { color: var(--muted); font-size: 11px; min-width: 32px; }
     .log-type {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 2px 6px;
-      border-radius: 3px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 2px 6px; border-radius: 3px;
     }
-    .log-type.create   { background: rgba(52,211,153,0.15); color: var(--green); }
-    .log-type.append   { background: rgba(124,106,247,0.15); color: var(--accent); }
-    .log-type.copy-reconcile { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .log-type.create          { background: rgba(52,211,153,0.15); color: var(--green); }
+    .log-type.append          { background: rgba(124,106,247,0.15); color: var(--accent); }
+    .log-type.copy-reconcile  { background: rgba(251,191,36,0.15); color: var(--yellow); }
     .log-agent { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .log-time  { color: var(--muted); font-size: 11px; margin-left: auto; flex-shrink: 0; }
-    .log-content {
-      color: #c9d1d9;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.6;
-    }
+    .log-content { color: #c9d1d9; white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
 
-    /* ── Empty state ── */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
-    }
+    /* ── Empty / error / init ── */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
     .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
     .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 
-    /* ── Error ── */
     .error-bar {
-      background: rgba(248,113,113,0.1);
-      border: 1px solid rgba(248,113,113,0.25);
-      color: var(--red);
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      display: none;
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
+      color: var(--red); border-radius: 6px; padding: 10px 14px;
+      margin-bottom: 16px; font-size: 13px; display: none;
     }
     .error-bar.visible { display: block; }
 
-    /* ── Not initialized banner ── */
     .init-banner {
-      background: rgba(124,106,247,0.08);
-      border: 1px solid rgba(124,106,247,0.2);
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      display: none;
+      background: rgba(124,106,247,0.08); border: 1px solid rgba(124,106,247,0.2);
+      border-radius: 8px; padding: 20px; text-align: center; display: none;
     }
     .init-banner.visible { display: block; }
     .init-banner h3 { color: var(--accent); margin-bottom: 6px; }
     .init-banner p { color: var(--muted); font-size: 13px; }
     .init-btn {
-      margin-top: 12px;
-      padding: 8px 20px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
+      margin-top: 12px; padding: 8px 20px; background: var(--accent);
+      color: #fff; border: none; border-radius: 6px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
     }
     .init-btn:hover { opacity: 0.85; }
 
-    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -350,21 +289,21 @@
   <div class="error-bar" id="error-bar"></div>
   <div class="init-banner" id="init-banner">
     <h3>Repository not initialized</h3>
-    <p>No Agentix repository has been initialized yet. Click below to initialize one.</p>
+    <p>No Agentix repository has been initialized yet.</p>
     <button class="init-btn" id="init-btn">Initialize Repository</button>
   </div>
   <div id="files-section">
-    <div class="section-heading">Files</div>
-    <div class="file-list" id="file-list"></div>
+    <div class="section-heading">File System</div>
+    <div id="tree-root"></div>
   </div>
 </main>
 
 <script>
   const POLL_INTERVAL = 3000;
-  const expandedFiles = new Set();   // fileIds currently expanded
-  const fileDetailCache = {};        // { fileId: { content, log } }
+  const expandedFiles = new Set();    // fileIds with open detail panels
+  const collapsedDirs = new Set();    // dir paths that are closed
 
-  // ── Utilities ──────────────────────────────────────────────────────────────
+  // ── Utilities ───────────────────────────────────────────────────────────────
 
   async function apiFetch(path) {
     const res = await fetch(path);
@@ -377,8 +316,8 @@
 
   function timeAgo(iso) {
     const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (diff < 5)   return 'just now';
-    if (diff < 60)  return `${diff}s ago`;
+    if (diff < 5)    return 'just now';
+    if (diff < 60)   return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
     return `${Math.floor(diff/3600)}h ago`;
   }
@@ -390,141 +329,195 @@
     document.getElementById('pulse').className = msg ? 'pulse error' : 'pulse';
   }
 
-  // ── Polling ────────────────────────────────────────────────────────────────
-
-  async function poll() {
-    try {
-      const status = await apiFetch('/status');
-      setError('');
-      document.getElementById('stat-files').textContent  = status.files.length;
-      document.getElementById('stat-locked').textContent = status.lockedFiles;
-      document.getElementById('stat-copies').textContent = status.pendingCopies;
-      document.getElementById('last-update').textContent = 'Live · ' + new Date().toLocaleTimeString();
-      document.getElementById('init-banner').classList.remove('visible');
-
-      renderFileList(status.files);
-
-      // refresh detail for any open file
-      for (const fileId of expandedFiles) {
-        fetchFileDetail(fileId);
-      }
-    } catch (err) {
-      if (err.status === 409 && err.message && err.message.toLowerCase().includes('not initialized')) {
-        document.getElementById('init-banner').classList.add('visible');
-        document.getElementById('stat-files').textContent  = '0';
-        document.getElementById('stat-locked').textContent = '0';
-        document.getElementById('stat-copies').textContent = '0';
-        document.getElementById('file-list').innerHTML = '';
-        setError('');
-      } else {
-        setError('API error: ' + err.message);
-      }
-    }
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // ── Render file list ───────────────────────────────────────────────────────
+  // ── Build tree from flat file list ─────────────────────────────────────────
+  // Returns a nested structure: { dirs: { name: node }, files: [TrackedFile] }
 
-  function renderFileList(files) {
-    const list = document.getElementById('file-list');
+  function buildTree(files) {
+    const root = { dirs: {}, files: [] };
+    for (const file of files) {
+      const parts = file.path.split('/');
+      parts.pop(); // remove filename, we keep it in file.name
+      let node = root;
+      for (const part of parts) {
+        if (!node.dirs[part]) node.dirs[part] = { dirs: {}, files: [] };
+        node = node.dirs[part];
+      }
+      node.files.push(file);
+    }
+    return root;
+  }
+
+  // ── Render tree ─────────────────────────────────────────────────────────────
+
+  function renderTree(files) {
+    const root = document.getElementById('tree-root');
 
     if (files.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📁</div>
-          <div class="empty-state-title">No files tracked yet</div>
-          <p>Files will appear here as agents upload them.</p>
+      root.innerHTML = `
+        <div class="tree">
+          <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <div class="empty-state-title">No files tracked yet</div>
+            <p>Files will appear here as agents upload them.</p>
+          </div>
         </div>`;
       return;
     }
 
-    // Build a map of current cards by fileId for diff-free updates
-    const existing = {};
-    list.querySelectorAll('.file-card').forEach(el => {
-      existing[el.dataset.fileId] = el;
-    });
+    const tree = buildTree(files);
 
-    const ordered = files.slice(); // preserve server order
-    ordered.forEach((file, i) => {
-      let card = existing[file.id];
-      if (!card) {
-        card = buildFileCard(file);
-        list.appendChild(card);
-      } else {
-        updateFileCardHeader(card, file);
-        delete existing[file.id];
+    // Update lock badges on existing rows without full re-render
+    // if tree structure hasn't changed (same file ids)
+    const existingIds = new Set([...root.querySelectorAll('.file-row')].map(r => r.dataset.fileId));
+    const newIds = new Set(files.map(f => f.id));
+    const sameStructure = existingIds.size === newIds.size && [...newIds].every(id => existingIds.has(id));
+
+    if (sameStructure) {
+      // Just patch lock badges and status dots
+      for (const file of files) {
+        const row = root.querySelector(`.file-row[data-file-id="${file.id}"]`);
+        if (row) {
+          row.querySelector('.status-dot').className = 'status-dot ' + (file.lock ? 'locked' : 'unlocked');
+          row.querySelector('.row-meta .badge').outerHTML = fileBadgeHtml(file);
+        }
       }
-      // ensure correct order
-      if (list.children[i] !== card) list.insertBefore(card, list.children[i] || null);
-    });
+      return;
+    }
 
-    // Remove cards that are no longer in the list
-    Object.values(existing).forEach(el => el.remove());
+    // Full re-render
+    const container = document.createElement('div');
+    container.className = 'tree';
+    renderNode(tree, container, [], files);
+    root.innerHTML = '';
+    root.appendChild(container);
   }
 
-  function buildFileCard(file) {
-    const card = document.createElement('div');
-    card.className = 'file-card' + (expandedFiles.has(file.id) ? ' expanded' : '');
-    card.dataset.fileId = file.id;
+  function renderNode(node, container, ancestorDepths, allFiles) {
+    const dirNames = Object.keys(node.dirs).sort();
+    const totalChildren = dirNames.length + node.files.length;
+    let childIndex = 0;
 
-    card.innerHTML = `
-      <div class="file-header">
-        <div class="file-status-dot ${file.lock ? 'locked' : 'unlocked'}"></div>
-        <div class="file-info">
-          <div class="file-name">${escHtml(file.name)}</div>
-          <div class="file-path">${escHtml(file.path)}</div>
-        </div>
-        <div class="file-meta">
-          ${fileBadges(file)}
-        </div>
-        <span class="chevron">▶</span>
+    for (const dirName of dirNames) {
+      const isLast = (childIndex === totalChildren - 1);
+      const dirPath = [...ancestorDepths.map(d => d.name), dirName].join('/');
+      renderDirRow(dirName, dirPath, node.dirs[dirName], container, ancestorDepths, isLast, allFiles);
+      childIndex++;
+    }
+
+    for (let i = 0; i < node.files.length; i++) {
+      const isLast = (childIndex === totalChildren - 1);
+      renderFileRow(node.files[i], container, ancestorDepths, isLast);
+      childIndex++;
+    }
+  }
+
+  function renderDirRow(name, dirPath, dirNode, container, ancestors, isLast, allFiles) {
+    const isOpen = !collapsedDirs.has(dirPath);
+
+    // Dir header row
+    const row = document.createElement('div');
+    row.className = 'dir-row' + (isOpen ? ' open' : '');
+    row.dataset.dirPath = dirPath;
+
+    row.innerHTML =
+      indentCells(ancestors) +
+      `<div class="indent-cell${isLast ? ' last' : ''}"></div>` +
+      `<div class="row-toggle">▶</div>` +
+      `<span class="row-icon">${isOpen ? '📂' : '📁'}</span>` +
+      `<span class="row-label dir-label">${escHtml(name)}</span>`;
+
+    row.addEventListener('click', () => toggleDir(row, dirPath, childrenWrapper));
+    container.appendChild(row);
+
+    // Children wrapper
+    const childrenWrapper = document.createElement('div');
+    childrenWrapper.className = 'dir-children' + (isOpen ? '' : ' hidden');
+    container.appendChild(childrenWrapper);
+
+    renderNode(dirNode, childrenWrapper, [...ancestors, { name, isLast }], allFiles);
+  }
+
+  function renderFileRow(file, container, ancestors, isLast) {
+    const row = document.createElement('div');
+    row.className = 'file-row' + (expandedFiles.has(file.id) ? ' expanded' : '');
+    row.dataset.fileId = file.id;
+
+    row.innerHTML =
+      indentCells(ancestors) +
+      `<div class="indent-cell${isLast ? ' last' : ''}"></div>` +
+      `<div class="row-toggle" style="visibility:hidden">▶</div>` +
+      `<span class="row-icon"><div class="status-dot ${file.lock ? 'locked' : 'unlocked'}"></div></span>` +
+      `<span class="row-label file-label">${escHtml(file.name)}</span>` +
+      `<div class="row-meta">${fileBadgeHtml(file)}</div>` +
+      `<div class="file-chevron">▶</div>`;
+
+    // Detail panel
+    const panel = document.createElement('div');
+    panel.className = 'file-panel' + (expandedFiles.has(file.id) ? ' visible' : '');
+    panel.id = 'panel-' + file.id;
+    panel.innerHTML = `
+      <div class="detail-tabs">
+        <button class="tab-btn active" data-tab="content">Content</button>
+        <button class="tab-btn" data-tab="log">Log</button>
       </div>
-      <div class="file-detail">
-        <div class="detail-tabs">
-          <button class="tab-btn active" data-tab="content">Content</button>
-          <button class="tab-btn" data-tab="log">Log</button>
-        </div>
-        <div class="tab-content active" data-tab="content">
-          <div class="content-block empty" id="content-${file.id}">Loading…</div>
-        </div>
-        <div class="tab-content" data-tab="log">
-          <div class="log-list" id="log-${file.id}"></div>
-        </div>
+      <div class="tab-content active" data-tab="content">
+        <div class="content-block empty" id="content-${file.id}">Loading…</div>
+      </div>
+      <div class="tab-content" data-tab="log">
+        <div class="log-list" id="log-${file.id}"></div>
       </div>`;
 
-    // Toggle expand
-    card.querySelector('.file-header').addEventListener('click', () => toggleCard(card, file.id));
-
-    // Tab switching
-    card.querySelectorAll('.tab-btn').forEach(btn => {
+    panel.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const tab = btn.dataset.tab;
-        card.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-        card.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === tab));
+        panel.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        panel.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === tab));
       });
     });
 
+    row.addEventListener('click', () => toggleFile(row, panel, file.id));
+
+    container.appendChild(row);
+    container.appendChild(panel);
+
     if (expandedFiles.has(file.id)) fetchFileDetail(file.id);
-    return card;
   }
 
-  function updateFileCardHeader(card, file) {
-    const dot = card.querySelector('.file-status-dot');
-    dot.className = 'file-status-dot ' + (file.lock ? 'locked' : 'unlocked');
-    card.querySelector('.file-name').textContent = file.name;
-    card.querySelector('.file-path').textContent = file.path;
-    card.querySelector('.file-meta').innerHTML = fileBadges(file);
+  function indentCells(ancestors) {
+    return ancestors.map(a =>
+      `<div class="indent-cell${a.isLast ? ' last' : ''}"></div>`
+    ).join('');
   }
 
-  function fileBadges(file) {
-    if (file.lock) {
-      return `<span class="badge lock">🔒 ${escHtml(file.lock.agentId.slice(0, 8))}…</span>`;
-    }
+  function fileBadgeHtml(file) {
+    if (file.lock) return `<span class="badge lock">🔒 ${escHtml(file.lock.agentId.slice(0, 10))}…</span>`;
     return `<span class="badge free">Unlocked</span>`;
   }
 
-  function toggleCard(card, fileId) {
-    const expanded = card.classList.toggle('expanded');
+  // ── Toggle dir open/close ───────────────────────────────────────────────────
+
+  function toggleDir(row, dirPath, childrenWrapper) {
+    const isOpen = row.classList.toggle('open');
+    childrenWrapper.classList.toggle('hidden', !isOpen);
+    const icon = row.querySelector('.row-icon');
+    icon.textContent = isOpen ? '📂' : '📁';
+    if (isOpen) collapsedDirs.delete(dirPath);
+    else        collapsedDirs.add(dirPath);
+  }
+
+  // ── Toggle file detail ──────────────────────────────────────────────────────
+
+  function toggleFile(row, panel, fileId) {
+    const expanded = row.classList.toggle('expanded');
+    panel.classList.toggle('visible', expanded);
     if (expanded) {
       expandedFiles.add(fileId);
       fetchFileDetail(fileId);
@@ -533,7 +526,7 @@
     }
   }
 
-  // ── File detail (content + log) ────────────────────────────────────────────
+  // ── Fetch and render file detail ────────────────────────────────────────────
 
   async function fetchFileDetail(fileId) {
     try {
@@ -542,9 +535,7 @@
         apiFetch(`/files/${fileId}/log`),
       ]);
       renderFileDetail(fileId, fileData.content, log);
-    } catch (e) {
-      // silently ignore if card was collapsed
-    }
+    } catch (e) { /* ignore if panel closed */ }
   }
 
   function renderFileDetail(fileId, content, log) {
@@ -558,17 +549,16 @@
         contentEl.textContent = '(empty)';
       }
     }
-
     const logEl = document.getElementById(`log-${fileId}`);
     if (logEl) {
       if (!log || log.length === 0) {
-        logEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0">No log entries yet.</div>';
+        logEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:4px 0">No log entries yet.</div>';
       } else {
         logEl.innerHTML = log.map(entry => `
           <div class="log-entry">
             <div class="log-meta">
               <span class="log-seq">#${entry.seq}</span>
-              <span class="log-type ${entry.type}">${escHtml(entry.type)}</span>
+              <span class="log-type ${escHtml(entry.type)}">${escHtml(entry.type)}</span>
               <span class="log-agent">${escHtml(entry.agentId)}</span>
               <span class="log-time">${timeAgo(entry.timestamp)}</span>
             </div>
@@ -578,29 +568,43 @@
     }
   }
 
-  // ── Init repo ──────────────────────────────────────────────────────────────
+  // ── Polling ─────────────────────────────────────────────────────────────────
 
-  document.getElementById('init-btn').addEventListener('click', async () => {
+  async function poll() {
     try {
-      await fetch('/repo/init', { method: 'POST' });
-      poll();
-    } catch (e) {
-      setError('Failed to initialize: ' + e.message);
+      const status = await apiFetch('/status');
+      setError('');
+      document.getElementById('stat-files').textContent  = status.files.length;
+      document.getElementById('stat-locked').textContent = status.lockedFiles;
+      document.getElementById('stat-copies').textContent = status.pendingCopies;
+      document.getElementById('last-update').textContent = 'Live · ' + new Date().toLocaleTimeString();
+      document.getElementById('init-banner').classList.remove('visible');
+
+      renderTree(status.files);
+
+      for (const fileId of expandedFiles) fetchFileDetail(fileId);
+    } catch (err) {
+      if (err.status === 409 && err.message && err.message.toLowerCase().includes('not initialized')) {
+        document.getElementById('init-banner').classList.add('visible');
+        document.getElementById('stat-files').textContent  = '0';
+        document.getElementById('stat-locked').textContent = '0';
+        document.getElementById('stat-copies').textContent = '0';
+        document.getElementById('tree-root').innerHTML = '';
+        setError('');
+      } else {
+        setError('API error: ' + err.message);
+      }
     }
-  });
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function escHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
-  // ── Start ──────────────────────────────────────────────────────────────────
+  // ── Init repo ────────────────────────────────────────────────────────────────
+
+  document.getElementById('init-btn').addEventListener('click', async () => {
+    try { await fetch('/repo/init', { method: 'POST' }); poll(); }
+    catch (e) { setError('Failed to initialize: ' + e.message); }
+  });
+
+  // ── Start ────────────────────────────────────────────────────────────────────
 
   poll();
   setInterval(poll, POLL_INTERVAL);
