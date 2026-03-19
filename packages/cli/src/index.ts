@@ -8,6 +8,7 @@ import { appendCommand } from './commands/append';
 import { statusCommand } from './commands/status';
 import { logCommand } from './commands/log';
 import { lsCommand } from './commands/ls';
+import { repoCommand } from './commands/repo';
 
 const program = new Command();
 
@@ -24,6 +25,7 @@ appendCommand(program);
 statusCommand(program);
 logCommand(program);
 lsCommand(program);
+repoCommand(program);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err);

@@ -1,4 +1,18 @@
+import { getActiveRepo } from './config';
+
 const BASE_URL = process.env.AGENTIX_API_URL ?? 'http://localhost:3000';
+
+function getPrefix(): string {
+  const repo = getActiveRepo();
+  return repo ? `/repos/${repo.repoId}` : '';
+}
+
+function getHeaders(): Record<string, string> {
+  const repo = getActiveRepo();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (repo?.secret) headers['X-Repo-Secret'] = repo.secret;
+  return headers;
+}
 
 async function request<T>(
   method: string,
@@ -6,15 +20,14 @@ async function request<T>(
   body?: unknown,
   query?: Record<string, string>,
 ): Promise<T> {
-  let url = `${BASE_URL}${path}`;
+  let url = `${BASE_URL}${getPrefix()}${path}`;
   if (query && Object.keys(query).length > 0) {
-    const params = new URLSearchParams(query);
-    url += `?${params.toString()}`;
+    url += `?${new URLSearchParams(query).toString()}`;
   }
 
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
@@ -28,7 +41,33 @@ async function request<T>(
   return data as T;
 }
 
+// Repo registry calls always hit the root (no active-repo prefix)
+async function registryRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err = data as { error: string; message: string };
+    throw new Error(`[${res.status}] ${err.error}: ${err.message}`);
+  }
+  return data as T;
+}
+
 export const api = {
+  // Repo registry
+  createRepo: (name: string, isPrivate: boolean) =>
+    registryRequest<{ repoId: string; name: string; isPrivate: boolean; createdAt: string; secret?: string }>(
+      'POST', '/repos', { name, isPrivate },
+    ),
+  listRepos: () =>
+    registryRequest<Array<{ repoId: string; name: string; isPrivate: boolean; createdAt: string }>>(
+      'GET', '/repos',
+    ),
+
+  // Per-repo operations (routed through active repo when set)
   initRepo: () => request<{ message: string }>('POST', '/repo/init'),
 
   status: () =>
