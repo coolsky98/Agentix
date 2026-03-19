@@ -1,0 +1,10 @@
+{
+  "name": "agentix",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build -w @agentix/core && npm run build -w @agentix/server && npm run build -w @agentix/cli",
+    "clean": "rm -rf packages/*/dist"
+  }
+}
