@@ -2,12 +2,15 @@
   "name": "agentix",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "npm run build -w @agentix/core && npm run build -w @agentix/server && npm run build -w @agentix/cli",
     "clean": "rm -rf packages/*/dist"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vercel/kv": "^2.0.0"
   }
 }

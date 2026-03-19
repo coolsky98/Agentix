@@ -1,10 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { Storage } from '@agentix/core';
+import { Storage, RepoRegistry } from '@agentix/core';
 import { Analytics } from '@vercel/analytics/next';
 import { repoContext } from './middleware/repoContext';
 import { errorHandler } from './middleware/errorHandler';
 import { repoRouter } from './routes/repo';
 import { filesRouter } from './routes/files';
+import { createReposRouter } from './routes/repos';
 
 const BASE_URL = 'https://my-agentix-repo.vercel.app';
 
@@ -274,11 +275,14 @@ const STATUS_PAGE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export function createApp(storage: Storage) {
+export function createApp(
+  storageFactory: (repoId: string) => Storage,
+  registry: RepoRegistry,
+) {
   const app = express();
 
   app.use(express.json({ limit: '100kb' }));
-  app.use(repoContext(storage));
+  const defaultRepoCtx = repoContext(storageFactory('default'));
 
   app.get('/', (_req: Request, res: Response) => {
     res.setHeader('Content-Type', 'text/html');
@@ -294,10 +298,10 @@ export function createApp(storage: Storage) {
     res.json(OPENAPI);
   });
 
-  app.use('/repo', repoRouter);
+  app.use('/repo', defaultRepoCtx, repoRouter);
 
-  // GET /status — top-level status endpoint
-  app.get('/status', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  // GET /status — top-level status endpoint (default repo)
+  app.get('/status', defaultRepoCtx, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const status = await req.repo.getStatus();
       res.json(status);
@@ -306,7 +310,10 @@ export function createApp(storage: Storage) {
     }
   });
 
-  app.use('/files', filesRouter);
+  app.use('/files', defaultRepoCtx, filesRouter);
+
+  // Multi-repo routes
+  app.use('/repos', createReposRouter(storageFactory, registry));
 
   app.use(errorHandler);
 

@@ -8,3 +8,4 @@ export * from './fileManager';
 export * from './copyManager';
 export * from './reconcileManager';
 export * from './repoManager';
+export * from './repoRegistry';

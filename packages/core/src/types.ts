@@ -56,3 +56,14 @@ export interface ReconcileResult {
   reconciledCopies: string[];
   appendedEntries: number;
 }
+
+export interface RepoInfo {
+  repoId: string;
+  name: string;
+  isPrivate: boolean;
+  createdAt: string;
+}
+
+export interface RepoRecord extends RepoInfo {
+  secret: string | null;
+}
